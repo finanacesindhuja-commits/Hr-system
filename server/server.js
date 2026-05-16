@@ -138,8 +138,21 @@ app.get('/api/staff/attendance/status/:staff_id', async (req, res) => {
 });
 
 app.get('/api/staff/attendance/history/:staff_id', async (req, res) => {
-    const { data } = await supabase.from('staff_attendance').select('*').eq('staff_id', req.params.staff_id).order('date', { ascending: false });
-    res.json(data || []);
+    try {
+        const istDate = moment().tz("Asia/Kolkata");
+        const dateLimit = istDate.startOf('month').format('YYYY-MM-DD');
+
+        const { data } = await supabase
+            .from('staff_attendance')
+            .select('*')
+            .eq('staff_id', req.params.staff_id)
+            .gte('date', dateLimit)
+            .order('date', { ascending: false });
+        
+        // Foolproof filter
+        const filteredData = (data || []).filter(item => item.date >= dateLimit);
+        res.json(filteredData);
+    } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // Fetch Payslips (Sync with HR Dashboard Payouts)
@@ -307,7 +320,11 @@ app.put('/api/hr/applicants/:id/reject', async (req, res) => {
 
 // --- PAYROLL & ATTENDANCE DATA ---
 app.get('/api/hr/attendance', async (req, res) => {
-    const { data, error } = await supabase.from('staff_attendance').select('*, staff(name)').order('date', { ascending: false });
+    const istDate = moment().tz("Asia/Kolkata");
+    const dateLimit = istDate.startOf('month').format('YYYY-MM-DD');
+    const { data, error } = await supabase.from('staff_attendance').select('*, staff(name)')
+        .gte('date', dateLimit)
+        .order('date', { ascending: false });
     if (error) return res.status(500).json({ error: error.message });
     res.json(data || []);
 });
