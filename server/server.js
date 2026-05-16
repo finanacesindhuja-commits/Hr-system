@@ -106,6 +106,19 @@ app.post('/api/attendance/check-in', async (req, res) => {
   }]);
 
   if (error) return res.status(500).json({ error: error.message });
+
+  // Update staff_locations for live map tracking
+  await supabase.from('staff_locations').insert([{ staff_id, latitude: lat, longitude: lng, timestamp: istTime }]);
+
+  // Try updating staff table (fails gracefully if columns are missing)
+  try {
+      await supabase.from('staff').update({ 
+          current_lat: lat, 
+          current_lng: lng, 
+          last_active: istTime 
+      }).eq('staff_id', staff_id);
+  } catch (e) { console.warn('Staff table update skipped'); }
+
   res.json({ success: true, time: istTime });
 });
 
@@ -119,15 +132,38 @@ app.post('/api/attendance/check-out', async (req, res) => {
   }).eq('staff_id', staff_id).eq('date', istDate);
 
   if (error) return res.status(500).json({ error: error.message });
+
+  // Update staff_locations for live map tracking
+  await supabase.from('staff_locations').insert([{ staff_id, latitude: lat, longitude: lng, timestamp: istTime }]);
+
+  // Try updating staff table (fails gracefully if columns are missing)
+  try {
+      await supabase.from('staff').update({ 
+          current_lat: lat, 
+          current_lng: lng, 
+          last_active: istTime 
+      }).eq('staff_id', staff_id);
+  } catch (e) { console.warn('Staff table update skipped'); }
+
   res.json({ success: true, time: istTime });
 });
 
 app.post('/api/staff/update-location', async (req, res) => {
     const { staff_id, name, latitude, longitude } = req.body;
-    const locationData = { staff_id, name, latitude, longitude, timestamp: new Date().toISOString() };
+    const timestamp = new Date().toISOString();
+    const locationData = { staff_id, name, latitude, longitude, timestamp };
     io.to('hr-room').emit('live-location', locationData);
-    await supabase.from('staff_locations').insert([{ staff_id, latitude, longitude }]);
-    await supabase.from('staff').update({ current_lat: latitude, current_lng: longitude, last_active: new Date().toISOString() }).eq('staff_id', staff_id);
+    
+    await supabase.from('staff_locations').insert([{ staff_id, latitude, longitude, timestamp }]);
+    
+    try {
+        await supabase.from('staff').update({ 
+            current_lat: latitude, 
+            current_lng: longitude, 
+            last_active: timestamp 
+        }).eq('staff_id', staff_id);
+    } catch (e) { console.warn('Staff table update skipped'); }
+
     res.json({ success: true });
 });
 
@@ -210,10 +246,46 @@ app.put('/api/hr/leaves/:id', async (req, res) => {
 });
 
 app.get('/api/hr/staff', async (req, res) => {
-
-    const { data, error } = await supabase.from('staff').select('*');
+    // Fetch all staff
+    const { data: staff, error } = await supabase.from('staff').select('*');
     if (error) return res.status(500).json({ error: error.message });
-    res.json(data);
+
+    // Fetch latest locations for all staff to inject into the response
+    // This handles cases where staff table doesn't have current_lat/lng columns
+    const { data: locations } = await supabase
+        .from('staff_locations')
+        .select('*')
+        .order('timestamp', { ascending: false });
+
+    const staffWithLocation = staff.map(s => {
+        const lastLoc = locations?.find(l => l.staff_id === s.staff_id);
+        return {
+            ...s,
+            current_lat: s.current_lat || lastLoc?.latitude,
+            current_lng: s.current_lng || lastLoc?.longitude,
+            last_active: s.last_active || lastLoc?.timestamp
+        };
+    });
+
+    res.json(staffWithLocation);
+});
+
+app.get('/api/hr/staff/route/:staff_id', async (req, res) => {
+    const { staff_id } = req.params;
+    const istDate = moment().tz("Asia/Kolkata").format("YYYY-MM-DD");
+    const startTime = `${istDate}T00:00:00Z`;
+    const endTime = `${istDate}T23:59:59Z`;
+
+    const { data, error } = await supabase
+        .from('staff_locations')
+        .select('*')
+        .eq('staff_id', staff_id)
+        .gte('timestamp', startTime)
+        .lte('timestamp', endTime)
+        .order('timestamp', { ascending: true });
+
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data || []);
 });
 
 app.post('/api/hr/staff', async (req, res) => {
