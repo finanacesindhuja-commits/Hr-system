@@ -1,5 +1,7 @@
 require('dotenv').config();
 const express = require('express');
+const compression = require('compression');
+const NodeCache = require('node-cache');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
@@ -10,6 +12,25 @@ const fileUpload = require('express-fileupload');
 
 
 const app = express();
+
+const cache = new NodeCache({ stdTTL: 15 });
+const flushCache = () => cache.flushAll();
+const cacheMiddleware = (duration = 15) => (req, res, next) => {
+  if (req.method !== 'GET') return next();
+  const key = req.originalUrl;
+  const cachedResponse = cache.get(key);
+  if (cachedResponse) return res.json(cachedResponse);
+  res.sendResponse = res.json;
+  res.json = (body) => {
+    if (res.statusCode >= 200 && res.statusCode < 300) {
+      cache.set(key, body, duration);
+    }
+    res.sendResponse(body);
+  };
+  next();
+};
+
+app.use(compression());
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
@@ -20,6 +41,16 @@ const io = new Server(server, {
 
 app.use(cors());
 app.use(express.json());
+
+app.use((req, res, next) => {
+  res.on('finish', () => {
+    if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method) && res.statusCode >= 200 && res.statusCode < 300) {
+      flushCache();
+    }
+  });
+  next();
+});
+
 app.use(fileUpload());
 
 // Validate Environment Variables
@@ -86,7 +117,7 @@ app.post('/api/staff/change-password', async (req, res) => {
     res.json({ message: 'Success', staff: data });
 });
 
-app.get('/api/staff/profile/:staff_id', async (req, res) => {
+app.get('/api/staff/profile/:staff_id', cacheMiddleware(10), async (req, res) => {
     const { data } = await supabase.from('staff').select('*').eq('staff_id', req.params.staff_id).single();
     res.json(data || null);
 });
@@ -167,13 +198,13 @@ app.post('/api/staff/update-location', async (req, res) => {
     res.json({ success: true });
 });
 
-app.get('/api/staff/attendance/status/:staff_id', async (req, res) => {
+app.get('/api/staff/attendance/status/:staff_id', cacheMiddleware(10), async (req, res) => {
     const istDate = moment().tz("Asia/Kolkata").format("YYYY-MM-DD");
     const { data } = await supabase.from('staff_attendance').select('*').eq('staff_id', req.params.staff_id).eq('date', istDate).single();
     res.json(data || null);
 });
 
-app.get('/api/staff/attendance/history/:staff_id', async (req, res) => {
+app.get('/api/staff/attendance/history/:staff_id', cacheMiddleware(10), async (req, res) => {
     try {
         const istDate = moment().tz("Asia/Kolkata");
         const dateLimit = istDate.startOf('month').format('YYYY-MM-DD');
@@ -192,7 +223,7 @@ app.get('/api/staff/attendance/history/:staff_id', async (req, res) => {
 });
 
 // Fetch Payslips (Sync with HR Dashboard Payouts)
-app.get('/api/staff/payslips/:staff_id', async (req, res) => {
+app.get('/api/staff/payslips/:staff_id', cacheMiddleware(10), async (req, res) => {
     const { data, error } = await supabase
         .from('salary_payments')
         .select('*')
