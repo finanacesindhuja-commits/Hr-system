@@ -95,7 +95,7 @@ async function sendEmail(to, subject, html) {
 // Admin/Desktop Login
 app.post('/api/auth/login', async (req, res) => {
   const { staff_id, password } = req.body;
-  const { data, error } = await supabase.from('staff').select('*').ilike('staff_id', staff_id).single();
+  const { data, error } = await supabase.from('staff').select('*').eq('staff_id', String(staff_id || '').trim().toUpperCase()).single();
   if (error || !data || data.password !== password) return res.status(401).json({ error: 'Invalid credentials' });
   res.json({ success: true, user: data });
 });
@@ -103,7 +103,7 @@ app.post('/api/auth/login', async (req, res) => {
 // Mobile/Staff App Login (Sync with hr att)
 app.post('/api/staff/login', async (req, res) => {
     const { staff_id, password } = req.body;
-    const { data: staff, error } = await supabase.from('staff').select('*').ilike('staff_id', staff_id).single();
+    const { data: staff, error } = await supabase.from('staff').select('*').eq('staff_id', String(staff_id || '').trim().toUpperCase()).single();
     if (error || !staff || staff.password !== password) return res.status(401).json({ error: 'Invalid Staff ID or password' });
     res.json({ message: 'Login successful', staff });
 });
