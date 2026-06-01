@@ -327,6 +327,36 @@ app.post('/api/hr/staff', async (req, res) => {
 });
 
 // --- APPLICANT APPROVAL WITH EMAIL ---
+app.post('/api/hr/applicants', async (req, res) => {
+    const { name, mobile, alternative_mobile, email, area, fathers_name, mothers_name, experience, degree, role, image_url, cert_10th_url, cert_12th_url, cert_degree_url } = req.body;
+    
+    const { data, error } = await supabase.from('applicants').insert([{
+        name, mobile, alternative_mobile, email, area, fathers_name, mothers_name, experience, degree, role, image_url, cert_10th_url, cert_12th_url, cert_degree_url, status: 'pending'
+    }]).select().single();
+
+    if (error) return res.status(500).json({ error: error.message });
+
+    // Send Application Received Email
+    if (email) {
+        const html = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+                <div style="background: #06b6d4; padding: 30px; text-align: center;">
+                    <h1 style="color: white; margin: 0; font-size: 24px;">Application Received</h1>
+                </div>
+                <div style="padding: 30px;">
+                    <p style="font-size: 16px;">Hello <b>${name}</b>,</p>
+                    <p style="font-size: 16px; line-height: 1.6;">Thank you for applying to Sindhuja Finance! We have successfully received your application for the <b>${role || 'Staff'}</b> position.</p>
+                    <p style="font-size: 16px; line-height: 1.6;">Our HR team will review your details and get back to you soon regarding the next steps.</p>
+                    <p style="font-size: 15px; margin-top: 30px; border-top: 1px solid #f1f5f9; pt: 20px;">Best Regards,<br><b>HR Department</b><br>Sindhuja Finance</p>
+                </div>
+            </div>
+        `;
+        await sendEmail(email, "Application Received - Sindhuja Finance", html);
+    }
+
+    res.json({ success: true, applicant: data });
+});
+
 app.get('/api/hr/applicants', async (req, res) => {
     const { data, error } = await supabase.from('applicants').select('*').eq('status', 'pending');
     if (error) return res.status(500).json({ error: error.message });
