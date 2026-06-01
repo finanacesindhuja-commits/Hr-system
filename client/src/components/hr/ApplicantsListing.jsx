@@ -37,12 +37,8 @@ export default function ApplicantsListing({ applicants, searchTerm, setSearchTer
                 <p className="flex justify-between"><span>Mobile:</span> <span className="text-white font-bold font-mono">{a.mobile}</span></p>
                 <p className="flex justify-between"><span>Exp:</span> <span className="text-emerald-400 font-bold uppercase">{a.experience}</span></p>
             </div>
-            <div className="grid grid-cols-1 gap-2 mb-2">
-              <button onClick={() => onSelect(a)} className="py-2 bg-white/5 hover:bg-white/10 rounded-lg text-xs font-bold transition-colors border border-white/5">View Full Profile</button>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <button onClick={() => onUpdate(a.id, 'approve')} className="py-2 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors">Approve</button>
-              <button onClick={() => onUpdate(a.id, 'reject')} className="py-2 bg-rose-600/20 hover:bg-rose-600 rounded-lg text-[10px] font-black uppercase tracking-widest border border-rose-500/30 transition-all">Reject</button>
+            <div className="grid grid-cols-1 gap-2 mt-4">
+              <button onClick={() => onSelect(a)} className="py-2.5 bg-cyan-600 hover:bg-cyan-500 rounded-lg text-xs font-bold transition-colors uppercase tracking-widest text-white">View Full Profile</button>
             </div>
           </div>
         ))}

@@ -133,7 +133,8 @@ export default function HRDashboard() {
       const payload = action === 'approve' ? { base_salary: proposedSalary, branch: proposedBranch } : {};
       await api.put(`/hr/applicants/${id}/${action}`, payload);
       showToast(`Candidate ${action === 'approve' ? 'Approved' : 'Rejected'} Successfully`);
-      fetchApplicants();
+      setSelectedApplicant(null); // Close the modal
+      fetchApplicants(); // Refresh the list
       if (action === 'approve') {
         fetchAll();
         setProposedSalary('');
