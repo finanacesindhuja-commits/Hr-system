@@ -294,7 +294,7 @@ export default function HRDashboard() {
                 )}
 
                 {tab === 'tracking' && (
-                  <LiveMap socket={socket} staff={staff} />
+                  <LiveMap socket={socket} staff={staff} attendance={attendance} />
                 )}
 
                 {tab === 'payslip' && (
