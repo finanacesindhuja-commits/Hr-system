@@ -260,9 +260,18 @@ app.post('/api/staff/upload-verification', async (req, res) => {
 // --- HR ADMIN ROUTES ---
 // Fetch All Leaves
 app.get('/api/hr/leaves', async (req, res) => {
+    // Default: current month. Optional ?month=YYYY-MM query param
+    const month = req.query.month || new Date().toISOString().slice(0, 7); // e.g. "2026-06"
+    const startOfMonth = `${month}-01`;
+    const endOfMonth = new Date(month + '-01');
+    endOfMonth.setMonth(endOfMonth.getMonth() + 1);
+    const endStr = endOfMonth.toISOString().slice(0, 10);
+
     const { data, error } = await supabase
       .from('staff_leaves')
       .select('*, staff(name)')
+      .gte('start_date', startOfMonth)
+      .lt('start_date', endStr)
       .order('id', { ascending: false });
     
     if (error) return res.status(500).json({ error: error.message });

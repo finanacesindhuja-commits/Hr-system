@@ -46,6 +46,7 @@ export default function HRDashboard() {
   const [tab, setTab] = useState('attendance');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedApplicant, setSelectedApplicant] = useState(null);
+  const [selectedMonth, setSelectedMonth] = useState(() => new Date().toISOString().slice(0, 7));
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingStaff, setEditingStaff] = useState(null);
   const [newStaff, setNewStaff] = useState({ staff_id: '', name: '', mobile: '', role: 'Staff', password: 'password', base_salary: '', branch: 'Thiruvarur 01' });
@@ -100,13 +101,19 @@ export default function HRDashboard() {
     }
   };
 
-  const fetchLeaves = async () => {
+  const fetchLeaves = async (month) => {
     try {
-      const { data } = await api.get('/hr/leaves');
+      const m = month || selectedMonth;
+      const { data } = await api.get(`/hr/leaves?month=${m}`);
       setLeaves(data || []);
     } catch (err) {
       console.error('[DEBUG] Leaves Fetch Error:', err);
     }
+  };
+
+  const handleMonthChange = (month) => {
+    setSelectedMonth(month);
+    fetchLeaves(month);
   };
 
   const fetchApplicants = async () => {
@@ -260,7 +267,12 @@ export default function HRDashboard() {
                 )}
 
                 {tab === 'leaves' && (
-                  <LeaveRequests leaves={leaves} onUpdate={handleUpdateLeave} />
+                  <LeaveRequests
+                    leaves={leaves}
+                    onUpdate={handleUpdateLeave}
+                    selectedMonth={selectedMonth}
+                    onMonthChange={handleMonthChange}
+                  />
                 )}
 
                 {tab === 'applicants' && (
