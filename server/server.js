@@ -77,8 +77,15 @@ const transporter = nodemailer.createTransport({
 
 async function sendEmail(to, subject, html) {
   try {
-    await transporter.sendMail({ from: `"Sindhuja Finance HR" <${process.env.EMAIL_USER}>`, to, subject, html });
-    console.log(`[EMAIL] Sent to ${to}`);
+    const response = await fetch('https://candidate-phi.vercel.app/api/send-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to, subject, html })
+    });
+    
+    if (!response.ok) throw new Error(`Email API failed: ${response.statusText}`);
+    const data = await response.json();
+    console.log(`[EMAIL] Sent to ${to} via Vercel:`, data);
   } catch (err) {
     console.error('[EMAIL] Failed:', err.message);
   }
