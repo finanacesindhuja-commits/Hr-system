@@ -413,7 +413,7 @@ app.put('/api/hr/applicants/:id/approve', async (req, res) => {
                 </div>
                 <div style="padding: 30px;">
                     <p style="font-size: 16px;">Hello <b>${applicant.name}</b>,</p>
-                    <p style="font-size: 16px; line-height: 1.6;">Congratulations! Your application has been <b>Approved</b>. You are now officially part of our team as a <b>${applicant.role || 'Staff'}</b> at the <b>${branch || 'Thiruvarur 01'}</b> branch.</p>
+                    <p style="font-size: 16px; line-height: 1.6;">Congratulations! Your application has been <b style="color: #10b981;">Approved</b>. You are now officially part of our team as a <b style="color: #06b6d4;">${applicant.role || 'Staff'}</b> at the <b style="color: #06b6d4;">${branch || 'Thiruvarur 01'}</b> branch.</p>
                     
                     <div style="background: #f8fafc; padding: 25px; border-radius: 10px; margin: 25px 0; border: 1px dashed #cbd5e1;">
                         <p style="margin: 0 0 15px 0; font-weight: bold; color: #475569; text-transform: uppercase; font-size: 12px; letter-spacing: 0.1em;">LOGIN CREDENTIALS</p>
