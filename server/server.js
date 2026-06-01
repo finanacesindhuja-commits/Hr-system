@@ -66,13 +66,12 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 // --- EMAIL CONFIGURATION ---
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true, // Use SSL/TLS
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
-  },
-  tls: {
-    rejectUnauthorized: false
   }
 });
 
@@ -420,7 +419,9 @@ app.put('/api/hr/applicants/:id/approve', async (req, res) => {
                 </div>
             </div>
         `;
-        await sendEmail(applicant.email, "Welcome to the Team! - Selection Letter", html);
+        // Send email in background
+        sendEmail(applicant.email, "Welcome to the Team! - Selection Letter", html)
+            .catch(err => console.error("Approve email error:", err));
     } else {
         console.warn(`[APPROVAL] No email found for applicant ${applicant.name}. Skipping email notification.`);
     }
@@ -445,7 +446,9 @@ app.put('/api/hr/applicants/:id/reject', async (req, res) => {
                 <p>Best Regards,<br>HR Department<br>Sindhuja Finance</p>
             </div>
         `;
-        await sendEmail(applicant.email, "Application Status - Sindhuja Finance", html);
+        // Send email in background
+        sendEmail(applicant.email, "Application Status - Sindhuja Finance", html)
+            .catch(err => console.error("Reject email error:", err));
     }
     
     res.json({ success: true });
