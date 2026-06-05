@@ -61,10 +61,6 @@ export default function HRDashboard() {
       return;
     }
     
-    fetchAll();
-    fetchLeaves();
-    fetchApplicants();
-    
     socket.on('connect', () => setConnected(true));
     socket.on('disconnect', () => setConnected(false));
     socket.emit('join-hr');
@@ -74,6 +70,24 @@ export default function HRDashboard() {
       socket.off('disconnect');
     };
   }, [user, navigate]);
+
+  useEffect(() => {
+    if (!user.staff_id || user.role?.toLowerCase() !== 'hr') return;
+
+    const refreshData = () => {
+      fetchAll();
+      fetchLeaves();
+      fetchApplicants();
+    };
+
+    // Initial fetch
+    refreshData();
+
+    // Auto-refresh every 30 seconds to keep data updated
+    const interval = setInterval(refreshData, 30000);
+
+    return () => clearInterval(interval);
+  }, [user, selectedMonth]);
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
