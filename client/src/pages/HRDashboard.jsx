@@ -211,7 +211,13 @@ export default function HRDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 font-inter text-slate-100 flex overflow-hidden">
+    <div className="min-h-screen bg-[#030014] font-inter text-slate-100 flex overflow-hidden relative">
+      {/* Premium Background Glows */}
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-600/10 blur-[150px] rounded-full" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-violet-600/10 blur-[150px] rounded-full" />
+        <div className="absolute top-[30%] right-[20%] w-[30%] h-[30%] bg-cyan-600/5 blur-[120px] rounded-full" />
+      </div>
       
       <Sidebar 
         tab={tab} 
@@ -222,7 +228,7 @@ export default function HRDashboard() {
         connected={connected}
       />
 
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10">
         {/* Mobile Header */}
         <header className="lg:hidden bg-slate-900 border-b border-white/10 p-4 flex justify-between items-center">
           <div className="flex items-center gap-3">

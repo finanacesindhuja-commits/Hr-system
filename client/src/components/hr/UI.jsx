@@ -5,18 +5,18 @@ export function SidebarItem({ active, onClick, icon, label, badge }) {
   return (
     <button 
       onClick={onClick}
-      className={`relative w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-300 ${
+      className={`relative w-full flex items-center gap-3.5 px-4.5 py-3.5 rounded-xl text-sm font-bold transition-all duration-300 group ${
         active 
-          ? 'bg-cyan-500 text-white shadow-[0_0_20px_rgba(6,182,212,0.3)]' 
-          : 'text-slate-400 hover:bg-white/5 hover:text-white'
+          ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-[0_4px_20px_rgba(99,102,241,0.25)] border border-indigo-400/20' 
+          : 'text-slate-400 hover:bg-white/5 hover:text-white border border-transparent'
       }`}
     >
-      <div className={`${active ? 'text-white' : 'text-cyan-500/50'}`}>
+      <div className={`transition-transform duration-300 group-hover:scale-110 ${active ? 'brightness-125' : ''}`}>
         {icon}
       </div>
-      {label}
+      <span>{label}</span>
       {badge && (
-        <span className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 bg-rose-500 text-white text-[10px] rounded-full flex items-center justify-center animate-pulse">
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 bg-rose-500 text-white text-[10px] rounded-full flex items-center justify-center font-black animate-pulse">
           {badge}
         </span>
       )}
@@ -26,16 +26,24 @@ export function SidebarItem({ active, onClick, icon, label, badge }) {
 
 export function StatCard({ icon, label, value, isSignal }) {
   return (
-    <div className="glass-card flex items-center gap-4 relative overflow-hidden group hover:bg-white/[0.15] transition-all">
-      <div className="p-3 bg-white/5 rounded-xl group-hover:bg-cyan-500/10 transition-colors">
-        {icon}
-      </div>
-      <div>
-        <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] mb-1">{label}</p>
-        <p className="text-2xl font-black font-outfit tracking-tighter">{value}</p>
+    <div className="relative overflow-hidden rounded-2xl border border-white/5 bg-slate-900/40 p-6 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-white/10 hover:shadow-2xl hover:shadow-indigo-500/5 group">
+      {/* Accent glow on hover */}
+      <div className="absolute -inset-px bg-gradient-to-r from-transparent via-indigo-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl pointer-events-none" />
+      
+      <div className="flex items-center gap-4 relative z-10">
+        <div className="p-4 rounded-xl bg-white/5 group-hover:scale-110 group-hover:bg-white/10 transition-all duration-300">
+          {icon}
+        </div>
+        <div>
+          <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mb-1">{label}</p>
+          <p className="text-3xl font-black font-outfit tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-300">{value}</p>
+        </div>
       </div>
       {isSignal && value > 0 && (
-        <div className="absolute top-2 right-2 w-2 h-2 bg-emerald-500 rounded-full animate-ping" />
+        <div className="absolute top-3 right-3 flex h-2 w-2">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+        </div>
       )}
     </div>
   );
@@ -45,10 +53,10 @@ export function TabButton({ active, onClick, icon, label }) {
   return (
     <button 
       onClick={onClick}
-      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+      className={`flex items-center gap-2 px-4.5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 transform active:scale-95 ${
         active 
-          ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/20' 
-          : 'text-slate-400 hover:text-white hover:bg-white/5'
+          ? 'bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-500/25 border border-indigo-400/20' 
+          : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
       }`}
     >
       {icon} {label}
