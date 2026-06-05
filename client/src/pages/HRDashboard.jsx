@@ -83,8 +83,8 @@ export default function HRDashboard() {
     // Initial fetch
     refreshData();
 
-    // Auto-refresh every 30 seconds to keep data updated
-    const interval = setInterval(refreshData, 30000);
+    // Auto-refresh every 10 seconds to keep data updated
+    const interval = setInterval(refreshData, 10000);
 
     return () => clearInterval(interval);
   }, [user, selectedMonth]);
