@@ -259,7 +259,7 @@ app.post('/api/staff/upload-verification', async (req, res) => {
 
 // --- HR ADMIN ROUTES ---
 // Fetch All Leaves
-app.get('/api/hr/leaves', async (req, res) => {
+app.get('/api/hr/leaves', cacheMiddleware(15), async (req, res) => {
     // Default: current month. Optional ?month=YYYY-MM query param
     const month = req.query.month || new Date().toISOString().slice(0, 7); // e.g. "2026-06"
     const startOfMonth = `${month}-01`;
@@ -291,16 +291,16 @@ app.put('/api/hr/leaves/:id', async (req, res) => {
     res.json({ success: true });
 });
 
-app.get('/api/hr/staff', async (req, res) => {
+app.get('/api/hr/staff', cacheMiddleware(15), async (req, res) => {
     // Fetch all staff
-    const { data: staff, error } = await supabase.from('staff').select('*');
-    if (error) return res.status(500).json({ error: error.message });
+    const { data: staff, error: staffError } = await supabase.from('staff').select('*');
+    if (staffError) return res.status(500).json({ error: staffError.message });
 
     // Fetch latest locations for all staff to inject into the response
-    // This handles cases where staff table doesn't have current_lat/lng columns
+    // Only select required columns and order by timestamp to optimize DB load
     const { data: locations } = await supabase
         .from('staff_locations')
-        .select('*')
+        .select('staff_id,latitude,longitude,timestamp')
         .order('timestamp', { ascending: false });
 
     const staffWithLocation = staff.map(s => {
@@ -372,7 +372,7 @@ app.post('/api/hr/applicants', async (req, res) => {
     res.json({ success: true, applicant: data });
 });
 
-app.get('/api/hr/applicants', async (req, res) => {
+app.get('/api/hr/applicants', cacheMiddleware(15), async (req, res) => {
     const { data, error } = await supabase.from('applicants').select('*').eq('status', 'pending');
     if (error) return res.status(500).json({ error: error.message });
     res.json(data || []);
@@ -471,7 +471,7 @@ app.put('/api/hr/applicants/:id/reject', async (req, res) => {
 });
 
 // --- PAYROLL & ATTENDANCE DATA ---
-app.get('/api/hr/attendance', async (req, res) => {
+app.get('/api/hr/attendance', cacheMiddleware(15), async (req, res) => {
     const istDate = moment().tz("Asia/Kolkata");
     const dateLimit = istDate.startOf('month').format('YYYY-MM-DD');
     const { data, error } = await supabase.from('staff_attendance').select('*, staff(name)')
