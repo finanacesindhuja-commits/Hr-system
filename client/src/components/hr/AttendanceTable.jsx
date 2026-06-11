@@ -1,6 +1,49 @@
 import React, { useState } from 'react';
-import { Clock, RefreshCw, Search, Download, Calendar } from 'lucide-react';
+import { Clock, RefreshCw, Search, Download, Calendar, LogIn, LogOut, Timer } from 'lucide-react';
 import { exportToCSV } from '../../utils/ExportUtils';
+
+// Format ISO timestamp → IST 12-hour time (e.g. "09:15 AM")
+function formatTime(isoString) {
+  if (!isoString) return null;
+  try {
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) {
+      // Maybe it's already HH:MM format
+      if (/^\d{2}:\d{2}/.test(isoString)) {
+        const [h, m] = isoString.split(':').map(Number);
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        const hour12 = h % 12 || 12;
+        return `${String(hour12).padStart(2, '0')}:${String(m).padStart(2, '0')} ${ampm}`;
+      }
+      return isoString;
+    }
+    return date.toLocaleTimeString('en-IN', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+      timeZone: 'Asia/Kolkata'
+    }).toUpperCase();
+  } catch {
+    return isoString;
+  }
+}
+
+// Calculate hours worked between check_in and check_out
+function calcDuration(checkIn, checkOut) {
+  if (!checkIn || !checkOut) return null;
+  try {
+    const inTime = new Date(checkIn);
+    const outTime = new Date(checkOut);
+    if (isNaN(inTime) || isNaN(outTime)) return null;
+    const diffMs = outTime - inTime;
+    if (diffMs <= 0) return null;
+    const hours = Math.floor(diffMs / 3600000);
+    const mins = Math.floor((diffMs % 3600000) / 60000);
+    return `${hours}h ${String(mins).padStart(2, '0')}m`;
+  } catch {
+    return null;
+  }
+}
 
 export default function AttendanceTable({ attendance, loading, onRefresh }) {
   const [localSearch, setLocalSearch] = useState('');
@@ -18,8 +61,9 @@ export default function AttendanceTable({ attendance, loading, onRefresh }) {
       'Staff Name': r.staff?.name,
       'Staff ID': r.staff_id,
       'Date': r.date,
-      'Check In': r.check_in,
-      'Check Out': r.check_out,
+      'Check In': formatTime(r.check_in) || '--',
+      'Check Out': formatTime(r.check_out) || '--',
+      'Duration': calcDuration(r.check_in, r.check_out) || '--',
       'Status': r.status
     }));
     exportToCSV(exportData, 'Attendance_Report');
@@ -30,7 +74,7 @@ export default function AttendanceTable({ attendance, loading, onRefresh }) {
       {/* Header & Filters */}
       <div className="p-4 border-b border-white/10 flex flex-col md:flex-row justify-between items-start md:items-center bg-white/5 gap-4">
         <h3 className="font-black flex items-center gap-2 font-outfit uppercase tracking-tighter">
-          <Clock className="w-5 h-5 text-cyan-400" /> Staff Attendance feed
+          <Clock className="w-5 h-5 text-cyan-400" /> Staff Attendance Feed
         </h3>
         
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
@@ -74,35 +118,100 @@ export default function AttendanceTable({ attendance, loading, onRefresh }) {
             <tr>
               <th className="p-4">Name / ID</th>
               <th className="p-4">Log Date</th>
-              <th className="p-4">Check In</th>
-              <th className="p-4">Check Out</th>
+              <th className="p-4">
+                <span className="flex items-center gap-1.5">
+                  <LogIn className="w-3 h-3 text-emerald-400" /> Check In
+                </span>
+              </th>
+              <th className="p-4">
+                <span className="flex items-center gap-1.5">
+                  <LogOut className="w-3 h-3 text-rose-400" /> Check Out
+                </span>
+              </th>
+              <th className="p-4">
+                <span className="flex items-center gap-1.5">
+                  <Timer className="w-3 h-3 text-amber-400" /> Duration
+                </span>
+              </th>
               <th className="p-4 text-right">Status</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
-            {filtered.map((row) => (
-              <tr key={row.id} className="hover:bg-white/[0.02] transition-colors group">
-                <td className="p-4">
-                  <p className="font-black group-hover:text-cyan-400 transition-colors uppercase">{row.staff?.name || 'Unknown'}</p>
-                  <p className="text-[10px] text-slate-500 font-bold">{row.staff_id}</p>
-                </td>
-                <td className="p-4 font-bold text-slate-300">{row.date}</td>
-                <td className="p-4 text-cyan-400 font-mono italic">{row.check_in || '--:--'}</td>
-                <td className="p-4 text-rose-400 font-mono italic">{row.check_out || '--:--'}</td>
-                <td className="p-4 text-right">
-                  <span className={`px-3 py-1 text-[10px] font-black rounded-full border shadow-lg uppercase ${
-                    row.status === 'Present' 
-                      ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 shadow-emerald-500/5'
-                      : 'bg-rose-500/10 text-rose-500 border-rose-500/20 shadow-rose-500/5'
-                  }`}>
-                    {row.status}
-                  </span>
-                </td>
-              </tr>
-            ))}
+            {filtered.map((row) => {
+              const inTime = formatTime(row.check_in);
+              const outTime = formatTime(row.check_out);
+              const duration = calcDuration(row.check_in, row.check_out);
+              const isPresent = row.status === 'Present';
+
+              return (
+                <tr key={row.id} className="hover:bg-white/[0.03] transition-colors group">
+                  {/* Name / ID */}
+                  <td className="p-4">
+                    <p className="font-black group-hover:text-cyan-400 transition-colors uppercase tracking-tight">{row.staff?.name || 'Unknown'}</p>
+                    <p className="text-[10px] text-slate-500 font-bold mt-0.5">{row.staff_id}</p>
+                  </td>
+
+                  {/* Date */}
+                  <td className="p-4">
+                    <span className="font-bold text-slate-300 text-xs">{row.date}</span>
+                  </td>
+
+                  {/* Check In */}
+                  <td className="p-4">
+                    {inTime ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-lg shadow-emerald-500/50 flex-shrink-0" />
+                        <span className="font-mono font-bold text-emerald-400 text-sm tracking-wide">{inTime}</span>
+                      </div>
+                    ) : (
+                      <span className="text-slate-600 font-mono text-xs italic">-- Not In --</span>
+                    )}
+                  </td>
+
+                  {/* Check Out */}
+                  <td className="p-4">
+                    {outTime ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-rose-400 shadow-lg shadow-rose-500/50 flex-shrink-0" />
+                        <span className="font-mono font-bold text-rose-400 text-sm tracking-wide">{outTime}</span>
+                      </div>
+                    ) : isPresent ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse flex-shrink-0" />
+                        <span className="text-amber-400 font-bold text-[10px] uppercase tracking-widest">In Field</span>
+                      </div>
+                    ) : (
+                      <span className="text-slate-600 font-mono text-xs italic">-- Not Out --</span>
+                    )}
+                  </td>
+
+                  {/* Duration */}
+                  <td className="p-4">
+                    {duration ? (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-lg text-[11px] font-bold font-mono">
+                        <Timer className="w-3 h-3" /> {duration}
+                      </span>
+                    ) : (
+                      <span className="text-slate-600 text-xs">—</span>
+                    )}
+                  </td>
+
+                  {/* Status */}
+                  <td className="p-4 text-right">
+                    <span className={`px-3 py-1 text-[10px] font-black rounded-full border shadow-lg uppercase ${
+                      isPresent
+                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-emerald-500/10'
+                        : 'bg-rose-500/10 text-rose-400 border-rose-500/20 shadow-rose-500/10'
+                    }`}>
+                      {row.status || 'Absent'}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan="5" className="p-12 text-center text-slate-500 font-black italic uppercase tracking-widest text-xs opacity-50">No matching records found.</td>
+                <td colSpan="6" className="p-12 text-center text-slate-500 font-black italic uppercase tracking-widest text-xs opacity-50">No matching records found.</td>
               </tr>
             )}
           </tbody>
