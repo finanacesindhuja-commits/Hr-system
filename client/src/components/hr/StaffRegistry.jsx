@@ -1,8 +1,8 @@
 import React from 'react';
-import { Search, LogOut, Download } from 'lucide-react';
+import { Search, LogOut, Download, BookOpen } from 'lucide-react';
 import { exportToCSV } from '../../utils/ExportUtils';
 
-export default function StaffRegistry({ staff, searchTerm, setSearchTerm, onEdit, onDelete, onAddClick }) {
+export default function StaffRegistry({ staff, searchTerm, setSearchTerm, onEdit, onDelete, onAddClick, onViewPassbook }) {
   
   const handleExport = () => {
     const exportData = staff.map(s => ({
@@ -78,10 +78,15 @@ export default function StaffRegistry({ staff, searchTerm, setSearchTerm, onEdit
                 <td className="p-4 text-slate-400 font-mono italic">{s.mobile}</td>
                 <td className="p-4 font-black text-white">₹{s.base_salary}</td>
                 <td className="p-4 text-right space-x-2">
-                  <button onClick={() => onEdit(s)} className="p-2.5 hover:bg-cyan-500/10 rounded-xl text-cyan-400 border border-transparent hover:border-cyan-500/20 transition-all">
+                  <button onClick={() => onViewPassbook(s.staff_id)} className="p-2.5 hover:bg-indigo-500/10 rounded-xl text-indigo-400 border border-transparent hover:border-indigo-500/20 transition-all" title="View Passbook">
+                     <BookOpen className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => onEdit(s)} className="p-2.5 hover:bg-cyan-500/10 rounded-xl text-cyan-400 border border-transparent hover:border-cyan-500/20 transition-all" title="Edit Staff">
                      <Search className="w-4 h-4" />
                   </button>
-                  <button onClick={() => onDelete(s.staff_id)} className="p-2.5 hover:bg-rose-500/10 rounded-xl text-rose-500 border border-transparent hover:border-rose-500/20 transition-all"><LogOut className="w-4 h-4 rotate-180" /></button>
+                  <button onClick={() => onDelete(s.staff_id)} className="p-2.5 hover:bg-rose-500/10 rounded-xl text-rose-500 border border-transparent hover:border-rose-500/20 transition-all" title="Delete Staff">
+                     <LogOut className="w-4 h-4 rotate-180" />
+                  </button>
                 </td>
               </tr>
             ))}

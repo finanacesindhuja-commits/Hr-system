@@ -22,6 +22,7 @@ import Toast from '../components/hr/Toast';
 import AddStaffModal from '../components/hr/modals/AddStaffModal';
 import EditStaffModal from '../components/hr/modals/EditStaffModal';
 import ApplicantDetailModal from '../components/hr/modals/ApplicantDetailModal';
+import StaffPassbookModal from '../components/hr/modals/StaffPassbookModal';
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 const api = axios.create({ baseURL: `${BASE_URL}/api` });
@@ -49,6 +50,7 @@ export default function HRDashboard() {
   const [selectedMonth, setSelectedMonth] = useState(() => new Date().toISOString().slice(0, 7));
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingStaff, setEditingStaff] = useState(null);
+  const [selectedPassbookStaff, setSelectedPassbookStaff] = useState(null);
   const [newStaff, setNewStaff] = useState({ staff_id: '', name: '', mobile: '', role: 'Staff', password: 'password', base_salary: '', branch: 'Thiruvarur 01' });
   const [error, setError] = useState(null);
   const [connected, setConnected] = useState(false);
@@ -283,6 +285,7 @@ export default function HRDashboard() {
                     onEdit={setEditingStaff}
                     onDelete={handleDeleteStaff}
                     onAddClick={() => setShowAddModal(true)}
+                    onViewPassbook={(id) => setSelectedPassbookStaff(id)}
                   />
                 )}
 
@@ -357,6 +360,12 @@ export default function HRDashboard() {
         setProposedSalary={setProposedSalary}
         proposedBranch={proposedBranch}
         setProposedBranch={setProposedBranch}
+      />
+
+      <StaffPassbookModal
+        isOpen={!!selectedPassbookStaff}
+        onClose={() => setSelectedPassbookStaff(null)}
+        staffId={selectedPassbookStaff}
       />
     </div>
   );
