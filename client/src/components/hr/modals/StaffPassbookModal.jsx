@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, BookOpen, Calendar, DollarSign, Activity, CheckCircle2, Clock, Briefcase } from 'lucide-react';
 import axios from 'axios';
-import moment from 'moment-timezone';
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 const api = axios.create({ baseURL: `${BASE_URL}/api` });
@@ -176,7 +175,7 @@ export default function StaffPassbookModal({ isOpen, onClose, staffId }) {
                           <tr key={p.id} className="hover:bg-white/5 transition-colors">
                             <td className="p-4 font-bold text-white flex items-center gap-2">
                                <Calendar className="w-4 h-4 text-slate-500" />
-                               {moment(p.month_year, "YYYY-MM").format("MMMM YYYY")}
+                               {new Date(p.month_year + "-01").toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                             </td>
                             <td className="p-4 font-mono text-slate-300">₹{p.base_salary}</td>
                             <td className="p-4 font-mono text-rose-400">₹{p.deductions}</td>
@@ -211,13 +210,13 @@ export default function StaffPassbookModal({ isOpen, onClose, staffId }) {
                           <tr key={a.id} className="hover:bg-white/5 transition-colors">
                             <td className="p-4 font-bold text-white flex items-center gap-2">
                                <Calendar className="w-4 h-4 text-slate-500" />
-                               {moment(a.date).format("DD MMM YYYY")}
+                               {new Date(a.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                             </td>
                             <td className="p-4 font-mono text-slate-400">
-                               {a.check_in ? moment(a.check_in).format("hh:mm A") : '--'}
+                               {a.check_in ? new Date(a.check_in).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '--'}
                             </td>
                             <td className="p-4 font-mono text-slate-400">
-                               {a.check_out ? moment(a.check_out).format("hh:mm A") : '--'}
+                               {a.check_out ? new Date(a.check_out).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '--'}
                             </td>
                             <td className="p-4">
                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-wider bg-blue-500/20 text-blue-400">
